@@ -1,0 +1,45 @@
+name: basic
+
+topology:
+  nodes:
+    r1:
+      kind: linux
+      image: p4lang/behavioral-model:latest
+      ports:
+        - 9559:9559
+      binds:
+        - logs:/var/log/simple_switch
+      exec:
+        - bash -c 'simple_switch_grpc -i 1@eth1 -i 2@eth2 --no-p4 --log-file /var/log/simple_switch/log --log-flush -L trace &'
+    h1:
+      kind: linux
+      image: duskmoon/dev-env:bs-u22
+      exec:
+        - ip addr add 10.0.1.2/24 dev eth1
+        - ip neigh add 10.0.1.1 lladdr 08:00:00:00:01:01 dev eth1
+        - ip route change default via 10.0.1.1 dev eth1
+    h2:
+      kind: linux
+      image: duskmoon/dev-env:bs-u22
+      exec:
+        - ip addr add 10.0.2.2/24 dev eth1
+        - ip neigh add 10.0.2.1 lladdr 08:00:00:00:02:01 dev eth1
+        - ip route change default via 10.0.2.1 dev eth1
+
+  links:
+    - type: veth
+      endpoints:
+        - node: r1
+          interface: eth1
+          mac: 08:00:00:00:01:01
+        - node: h1
+          interface: eth1
+          mac: 08:00:00:00:01:02
+    - type: veth
+      endpoints:
+        - node: r1
+          interface: eth2
+          mac: 08:00:00:00:02:01
+        - node: h2
+          interface: eth1
+          mac: 08:00:00:00:02:02

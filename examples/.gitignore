@@ -1,0 +1,8 @@
+build/
+logs/
+
+__pycache__/
+
+# Ignore containerlab generated files
+*.clab.yml.bak
+clab-*/
