@@ -40,11 +40,8 @@ impl<T: Borrow<Client>> Counter<T> {
 impl<T: Borrow<Client> + BorrowMut<Client>> Counter<T> {
     pub async fn read_entry(
         &mut self,
-        counter_name: &str,
-        index: i64,
+        counter_entry: p4_v1::CounterEntry,
     ) -> Result<p4_v1::CounterEntry, error::ReadCounterEntrySingleError> {
-        let counter_entry = self.new_entry(counter_name, Some(index), None);
-
         let entity = p4_v1::Entity {
             entity: Some(p4_v1::entity::Entity::CounterEntry(counter_entry)),
         };
@@ -63,11 +60,8 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Counter<T> {
 
     pub async fn read_entries(
         &mut self,
-        counter_name: &str,
-        index: Option<i64>,
+        counter_entry: p4_v1::CounterEntry,
     ) -> Result<Vec<p4_v1::CounterEntry>, error::ReadCounterEntriesError> {
-        let counter_entry = self.new_entry(counter_name, index, None);
-
         let entity = p4_v1::Entity {
             entity: Some(p4_v1::entity::Entity::CounterEntry(counter_entry)),
         };
@@ -91,12 +85,8 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Counter<T> {
 
     pub async fn modify_entry(
         &mut self,
-        counter_name: &str,
-        index: i64,
-        data: p4_v1::CounterData,
+        counter_entry: p4_v1::CounterEntry,
     ) -> Result<p4_v1::WriteResponse, tonic::Status> {
-        let counter_entry = self.new_entry(counter_name, Some(index), Some(data));
-
         let update = p4_v1::Update {
             r#type: p4_v1::update::Type::Modify as i32,
             entity: Some(p4_v1::Entity {
