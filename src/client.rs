@@ -182,6 +182,18 @@ impl Client {
         self.p4rt_client.set_forwarding_pipeline_config(req).await
     }
 
+    pub async fn get_forwarding_pipeline_config(
+        &mut self,
+        response_type: p4_v1::get_forwarding_pipeline_config_request::ResponseType,
+    ) -> Result<tonic::Response<p4_v1::GetForwardingPipelineConfigResponse>, tonic::Status> {
+        let req = p4_v1::GetForwardingPipelineConfigRequest {
+            device_id: self.device_id,
+            response_type: response_type as i32,
+        };
+
+        self.p4rt_client.get_forwarding_pipeline_config(req).await
+    }
+
     #[inline]
     pub async fn write_update_batch(
         &mut self,
