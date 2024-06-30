@@ -1,3 +1,7 @@
+//! p4runtime-client: A P4Runtime client wrapper crate
+
+#![deny(missing_docs)]
+
 pub mod client;
 pub mod config;
 pub mod counter;

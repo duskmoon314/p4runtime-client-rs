@@ -1,3 +1,5 @@
+//! Table helper and operations
+
 use std::borrow::{Borrow, BorrowMut};
 
 use p4runtime::p4::v1 as p4_v1;
@@ -18,6 +20,14 @@ impl<T: Borrow<Client>> Table<T> {
         Table { client }
     }
 
+    /// Create a new table action by name and parameters
+    ///
+    /// # Arguments
+    ///
+    /// - `action_name`: Name of the action
+    ///   - It is used to the action id in P4Info
+    ///   - If the action name is not found, wildcard is used, i.e., id = 0
+    /// - `params`: Parameters of the action
     pub fn new_action(&self, action_name: &str, params: Vec<Vec<u8>>) -> p4_v1::TableAction {
         let client: &Client = self.client.borrow();
         let action_id = client.p4info().action_id(action_name);
@@ -39,6 +49,7 @@ impl<T: Borrow<Client>> Table<T> {
         }
     }
 
+    /// Create a new table entry by table name, match fields, action, and priority
     pub fn new_entry(
         &self,
         table_name: &str,
@@ -70,6 +81,7 @@ impl<T: Borrow<Client>> Table<T> {
 }
 
 impl<T: Borrow<Client> + BorrowMut<Client>> Table<T> {
+    /// Read a table entry
     pub async fn read_entry(
         &mut self,
         table_entry: p4_v1::TableEntry,
@@ -90,6 +102,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Table<T> {
         }
     }
 
+    /// Read table entries
     pub async fn read_entries(
         &mut self,
         table_entry: p4_v1::TableEntry,
@@ -115,6 +128,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Table<T> {
         Ok(entries)
     }
 
+    /// Insert a table entry
     pub async fn insert_entry(
         &mut self,
         table_entry: p4_v1::TableEntry,
@@ -130,6 +144,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Table<T> {
         client.write_update(update).await
     }
 
+    /// Insert table entries
     pub async fn insert_entries(
         &mut self,
         table_entries: Vec<p4_v1::TableEntry>,
@@ -148,6 +163,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Table<T> {
         client.write_update_batch(updates).await
     }
 
+    /// Modify a table entry
     pub async fn modify_entry(
         &mut self,
         table_entry: p4_v1::TableEntry,
@@ -163,6 +179,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Table<T> {
         client.write_update(update).await
     }
 
+    /// Modify table entries
     pub async fn modify_entries(
         &mut self,
         table_entries: Vec<p4_v1::TableEntry>,
@@ -181,6 +198,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Table<T> {
         client.write_update_batch(updates).await
     }
 
+    /// Delete a table entry
     pub async fn delete_entry(
         &mut self,
         table_entry: p4_v1::TableEntry,
@@ -196,6 +214,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Table<T> {
         client.write_update(update).await
     }
 
+    /// Delete table entries
     pub async fn delete_entries(
         &mut self,
         table_entries: Vec<p4_v1::TableEntry>,
@@ -215,24 +234,31 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Table<T> {
     }
 }
 
+/// Error types for table operations
 pub mod error {
     use p4runtime::p4::v1 as p4_v1;
     use thiserror::Error;
 
+    /// Error for [`read_entry`](crate::table::Table::read_entry)
     #[derive(Error, Debug)]
     pub enum ReadTableEntrySingleError {
+        /// The inner read entity error
         #[error(transparent)]
         ReadEntitySingle(#[from] crate::client::error::ReadEntitySingleError),
 
+        /// The entity is not a table entry
         #[error("Entity is not a TableEntry: {0:?}")]
         NotTableEntry(Option<p4_v1::entity::Entity>),
     }
 
+    /// Error for [`read_entries`](crate::table::Table::read_entries)
     #[derive(Error, Debug)]
     pub enum ReadTableEntriesError {
+        /// The inner read entities error
         #[error("Tonic status: {0}")]
         TonicStatus(#[from] tonic::Status),
 
+        /// The entity is not a table entry
         #[error("Entity is not a TableEntry: {0:?}")]
         NotTableEntry(Option<p4_v1::entity::Entity>),
     }

@@ -1,3 +1,5 @@
+//! P4Info helper
+
 use std::{collections::HashMap, ops::Deref};
 
 use p4runtime::p4::config::v1 as p4_cfg_v1;
@@ -47,6 +49,7 @@ impl Deref for P4Info {
 }
 
 impl P4Info {
+    /// Load P4Info to P4Info Helper
     pub fn load(&mut self, p4info: p4_cfg_v1::P4Info) {
         self.p4info = Some(p4info);
 
@@ -279,10 +282,16 @@ impl P4Info {
             .collect();
     }
 
+    /// Find table id by table name
+    ///
+    /// If table name not found, return 0 (wildcard)
     pub fn table_id(&self, table_name: &str) -> u32 {
         *self.table_id_map.get(table_name).unwrap_or(&0)
     }
 
+    /// Find table match field id by table name and match field name
+    ///
+    /// If not found, return 0 (wildcard)
     pub fn table_match_field_id(&self, table_name: &str, match_field_name: &str) -> u32 {
         *self
             .table_match_field_id_map
@@ -290,10 +299,16 @@ impl P4Info {
             .unwrap_or(&0)
     }
 
+    /// Find action id by action name
+    ///
+    /// If not found, return 0
     pub fn action_id(&self, action_name: &str) -> u32 {
         *self.action_id_map.get(action_name).unwrap_or(&0)
     }
 
+    /// Find action profile id by action profile name
+    ///
+    /// If not found, return 0
     pub fn action_profile_id(&self, action_profile_name: &str) -> u32 {
         *self
             .action_profile_id_map
@@ -301,10 +316,16 @@ impl P4Info {
             .unwrap_or(&0)
     }
 
+    /// Find counter id by counter name
+    ///
+    /// If not found, return 0
     pub fn counter_id(&self, counter_name: &str) -> u32 {
         *self.counter_id_map.get(counter_name).unwrap_or(&0)
     }
 
+    /// Find direct counter id by direct counter name
+    ///
+    /// If not found, return 0
     pub fn direct_counter_id(&self, direct_counter_name: &str) -> u32 {
         *self
             .direct_counter_id_map
@@ -312,10 +333,16 @@ impl P4Info {
             .unwrap_or(&0)
     }
 
+    /// Find meter id by meter name
+    ///
+    /// If not found, return 0
     pub fn meter_id(&self, meter_name: &str) -> u32 {
         *self.meter_id_map.get(meter_name).unwrap_or(&0)
     }
 
+    /// Find direct meter id by direct meter name
+    ///
+    /// If not found, return 0
     pub fn direct_meter_id(&self, direct_meter_name: &str) -> u32 {
         *self
             .direct_meter_id_map
@@ -323,14 +350,23 @@ impl P4Info {
             .unwrap_or(&0)
     }
 
+    /// Find value set id by value set name
+    ///
+    /// If not found, return 0
     pub fn value_set_id(&self, value_set_name: &str) -> u32 {
         *self.value_set_id_map.get(value_set_name).unwrap_or(&0)
     }
 
+    /// Find register id by register name
+    ///
+    /// If not found, return 0
     pub fn register_id(&self, register_name: &str) -> u32 {
         *self.register_id_map.get(register_name).unwrap_or(&0)
     }
 
+    /// Find digest id by digest name
+    ///
+    /// If not found, return 0
     pub fn digest_id(&self, digest_name: &str) -> u32 {
         *self.digest_id_map.get(digest_name).unwrap_or(&0)
     }

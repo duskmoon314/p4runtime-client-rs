@@ -1,3 +1,5 @@
+//! Digest helper and operations
+
 use std::borrow::{Borrow, BorrowMut};
 
 use p4runtime::p4::v1 as p4_v1;
@@ -18,6 +20,7 @@ impl<T: Borrow<Client>> Digest<T> {
         Digest { client }
     }
 
+    /// Create a new DigestEntry by name
     pub fn new_entry(
         &self,
         digest_name: &str,
@@ -40,6 +43,7 @@ impl<T: Borrow<Client>> Digest<T> {
 }
 
 impl<T: Borrow<Client> + BorrowMut<Client>> Digest<T> {
+    /// Read a DigestEntry
     pub async fn read_entry(
         &mut self,
         digest_entry: p4_v1::DigestEntry,
@@ -59,6 +63,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Digest<T> {
         }
     }
 
+    /// Insert a DigestEntry
     pub async fn insert_entry(
         &mut self,
         digest_entry: p4_v1::DigestEntry,
@@ -74,6 +79,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Digest<T> {
         client.write_update(update).await
     }
 
+    /// Insert multiple DigestEntries
     pub async fn insert_entries(
         &mut self,
         digest_entries: Vec<p4_v1::DigestEntry>,
@@ -92,6 +98,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Digest<T> {
         client.write_update_batch(updates).await
     }
 
+    /// Modify a DigestEntry
     pub async fn modify_entry(
         &mut self,
         digest_entry: p4_v1::DigestEntry,
@@ -107,6 +114,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Digest<T> {
         client.write_update(update).await
     }
 
+    /// Modify multiple DigestEntries
     pub async fn modify_entries(
         &mut self,
         digest_entries: Vec<p4_v1::DigestEntry>,
@@ -125,6 +133,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Digest<T> {
         client.write_update_batch(updates).await
     }
 
+    /// Delete a DigestEntry
     pub async fn delete_entry(
         &mut self,
         digest_entry: p4_v1::DigestEntry,
@@ -140,6 +149,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Digest<T> {
         client.write_update(update).await
     }
 
+    /// Delete multiple DigestEntries
     pub async fn delete_entries(
         &mut self,
         digest_entries: Vec<p4_v1::DigestEntry>,
@@ -158,6 +168,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Digest<T> {
         client.write_update_batch(updates).await
     }
 
+    /// Acknowledge a DigestList
     pub async fn ack_digest_list(
         &mut self,
         digest_list: &p4_v1::DigestList,
@@ -181,24 +192,19 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Digest<T> {
     }
 }
 
+/// Error types for Digest operations
 pub mod error {
     use p4runtime::p4::v1 as p4_v1;
     use thiserror::Error;
 
+    /// Error for [`read_entry`](crate::digest::Digest::read_entry)
     #[derive(Error, Debug)]
     pub enum ReadDigestEntrySingleError {
+        /// The inner read entity error
         #[error(transparent)]
         ReadEntitySingle(#[from] crate::client::error::ReadEntitySingleError),
 
-        #[error("Entity is not a DigestEntry: {0:?}")]
-        NotDigestEntry(Option<p4_v1::entity::Entity>),
-    }
-
-    #[derive(Error, Debug)]
-    pub enum ReadDigestEntriesError {
-        #[error("Tonic status: {0}")]
-        TonicStatus(#[from] tonic::Status),
-
+        /// The entity is not a DigestEntry
         #[error("Entity is not a DigestEntry: {0:?}")]
         NotDigestEntry(Option<p4_v1::entity::Entity>),
     }
