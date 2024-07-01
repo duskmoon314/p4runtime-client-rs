@@ -975,6 +975,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "tna_basic"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "p4runtime-client",
+ "prost",
+ "tokio",
+]
+
+[[package]]
 name = "tokio"
 version = "1.37.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
