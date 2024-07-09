@@ -12,7 +12,7 @@ members = ["examples/basic", "examples/tna_basic"]
 anyhow = "1.0.83"
 # p4runtime = { path = "../p4runtime/rust" }
 p4runtime = { git = "https://github.com/duskmoon314/p4runtime", branch = "rust" }
-prost = "0.12.4"
+prost = "0.13.0"
 serde = { version = "1.0.201", features = ["derive"] }
 thiserror = "1.0.60"
 tokio = { version = "1.37.0", features = ["sync"] }
