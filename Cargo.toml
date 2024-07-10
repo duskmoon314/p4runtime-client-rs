@@ -9,12 +9,21 @@ edition = "2021"
 members = ["examples/basic", "examples/tna_basic"]
 
 [dependencies]
-anyhow = "1.0.83"
+
+# Error handling
+thiserror = "1.0.61"
+
+# protobuf and gRPC
+prost = "0.13.1"
+tonic = "0.12.0"
+
+# p4runtime generated code
 # p4runtime = { path = "../p4runtime/rust" }
 p4runtime = { git = "https://github.com/duskmoon314/p4runtime", branch = "rust" }
-prost = "0.12.4"
-serde = { version = "1.0.201", features = ["derive"] }
-thiserror = "1.0.60"
-tokio = { version = "1.37.0", features = ["sync"] }
+
+# tokio async runtime and utilities
+tokio = { version = "1.38.0", features = ["sync"] }
 tokio-stream = "0.1.15"
-tonic = "0.11.0"
+
+# serde
+serde = { version = "1.0.204", features = ["derive"] }
