@@ -8,22 +8,41 @@ edition = "2021"
 [workspace]
 members = ["examples/basic", "examples/tna_basic"]
 
-[dependencies]
+[workspace.dependencies]
 
 # Error handling
+anyhow = "1.0.86"
 thiserror = "1.0.61"
 
 # protobuf and gRPC
 prost = "0.13.1"
 tonic = "0.12.0"
 
+# tokio async runtime and utilities
+tokio = "1.38.0"
+tokio-stream = "0.1.15"
+
+# serde
+serde = "1.0.204"
+
+p4runtime-client = { path = "." }
+
+[dependencies]
+
+# Error handling
+thiserror = { workspace = true }
+
+# protobuf and gRPC
+prost = { workspace = true }
+tonic = { workspace = true }
+
 # p4runtime generated code
 # p4runtime = { path = "../p4runtime/rust" }
 p4runtime = { git = "https://github.com/duskmoon314/p4runtime", branch = "rust" }
 
 # tokio async runtime and utilities
-tokio = { version = "1.38.0", features = ["sync"] }
-tokio-stream = "0.1.15"
+tokio = { workspace = true, features = ["sync"] }
+tokio-stream = { workspace = true }
 
 # serde
-serde = { version = "1.0.204", features = ["derive"] }
+serde = { workspace = true, features = ["derive"] }
