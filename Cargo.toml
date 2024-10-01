@@ -16,7 +16,7 @@ thiserror = "1.0.63"
 
 # protobuf and gRPC
 prost = "0.13.2"
-tonic = "0.12.2"
+tonic = "0.12.3"
 
 # tokio async runtime and utilities
 tokio = "1.40.0"
