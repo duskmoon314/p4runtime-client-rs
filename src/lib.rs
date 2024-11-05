@@ -8,5 +8,6 @@ pub mod counter;
 pub mod digest;
 pub mod p4info;
 pub mod table;
+pub mod utils;
 
 pub use p4runtime;

@@ -10,3 +10,4 @@ anyhow = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 p4runtime-client = { workspace = true }
 prost = { workspace = true }
+serde = { workspace = true, features = ["derive"] }

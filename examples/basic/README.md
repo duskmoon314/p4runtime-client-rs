@@ -112,3 +112,20 @@ PING 10.0.2.2 (10.0.2.2) 56(84) bytes of data.
 8 packets transmitted, 8 received, 0% packet loss, time 7070ms
 rtt min/avg/max/mdev = 1.121/932.092/3393.901/1232.534 ms, pipe 4
 ```
+
+And for the rust server's output:
+
+```shell
+$ cargo run -r --package basic
+   Compiling basic v0.1.0 (/home/star/documents/p4rtc/examples/basic)
+    Finished `release` profile [optimized] target(s) in 3.97s
+     Running `/home/star/documents/p4rtc/target/release/basic`
+Server P4Runtime capabilities: "1.3.0"
+Starting master arbitration...
+Setting pipeline config...
+Table entries inserted.
+Received IPv4 digest: Ipv4Digest { dst_mac: [8, 0, 0, 0, 2, 2], dst_ip: 10.0.2.2, ip_proto: 1 }
+Received IPv4 digest: Ipv4Digest { dst_mac: [8, 0, 0, 0, 1, 2], dst_ip: 10.0.1.2, ip_proto: 1 }
+Received IPv4 digest: Ipv4Digest { dst_mac: [8, 0, 0, 0, 2, 2], dst_ip: 10.0.2.2, ip_proto: 1 }
+Received IPv4 digest: Ipv4Digest { dst_mac: [8, 0, 0, 0, 1, 2], dst_ip: 10.0.1.2, ip_proto: 1 }
+```

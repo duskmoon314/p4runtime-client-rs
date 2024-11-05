@@ -1,8 +1,20 @@
 use p4runtime_client::client::{Client, ClientOptions};
 use p4runtime_client::p4runtime::p4::config::v1::P4Info;
 use p4runtime_client::p4runtime::p4::v1::p4_runtime_client::P4RuntimeClient;
-use p4runtime_client::p4runtime::p4::v1::{self as p4_v1, CapabilitiesRequest, Uint128};
+use p4runtime_client::p4runtime::p4::v1::stream_message_response::Update;
+use p4runtime_client::p4runtime::p4::v1::{
+    self as p4_v1, CapabilitiesRequest, DigestList, Uint128,
+};
+use p4runtime_client::utils::de::from_p4data;
 use prost::Message;
+
+#[allow(dead_code)]
+#[derive(Debug, serde::Deserialize)]
+struct Ipv4Digest {
+    dst_mac: [u8; 6],
+    dst_ip: std::net::Ipv4Addr,
+    ip_proto: u8,
+}
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -89,7 +101,12 @@ async fn main() -> anyhow::Result<()> {
         .message()
         .await?
     {
-        println!("Received message: {:?}", msg);
+        if let Some(Update::Digest(DigestList { data, .. })) = msg.update {
+            for d in data {
+                let ipv4_digest: Ipv4Digest = from_p4data(&d)?;
+                println!("Received IPv4 digest: {:?}", ipv4_digest);
+            }
+        }
     }
 
     Ok(())
