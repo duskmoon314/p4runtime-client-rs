@@ -136,7 +136,7 @@ impl Client {
                 p4_v1::MasterArbitrationUpdate {
                     device_id: self.device_id,
                     role: self.role.clone(),
-                    election_id: Some(self.election_id.clone()),
+                    election_id: Some(self.election_id),
                     status: None,
                 },
             )),
@@ -198,7 +198,7 @@ impl Client {
         let req = p4_v1::SetForwardingPipelineConfigRequest {
             device_id: self.device_id,
             role: self.role_name(),
-            election_id: Some(self.election_id.clone()),
+            election_id: Some(self.election_id),
             action: p4_v1::set_forwarding_pipeline_config_request::Action::VerifyAndCommit as i32,
             config: Some(p4_v1::ForwardingPipelineConfig {
                 p4info: Some(self.p4info.as_ref().clone()),
@@ -234,7 +234,7 @@ impl Client {
         let req = p4_v1::WriteRequest {
             device_id: self.device_id,
             role: self.role_name(),
-            election_id: Some(self.election_id.clone()),
+            election_id: Some(self.election_id),
             updates,
 
             ..Default::default()
