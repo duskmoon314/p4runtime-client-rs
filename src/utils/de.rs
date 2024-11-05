@@ -103,10 +103,13 @@ impl<'de> Deserializer<'de> {
     fn parse_i16(&self) -> Result<i16, DeserializeP4DataError> {
         match &self.data.data {
             Some(p4_data::Data::Bitstring(bytes)) => {
-                if bytes.len() != 2 {
+                if bytes.len() > 2 {
                     return Err(DeserializeP4DataError::ExpectedI16);
                 }
-                Ok(i16::from_be_bytes([bytes[0], bytes[1]]))
+
+                let mut buf = [0; 2];
+                buf[2 - bytes.len()..].copy_from_slice(bytes);
+                Ok(i16::from_be_bytes(buf))
             }
             Some(p4_data::Data::Varbit(P4Varbit {
                 bitstring,
@@ -115,7 +118,10 @@ impl<'de> Deserializer<'de> {
                 if *bitwidth > 16 {
                     return Err(DeserializeP4DataError::ExpectedI16);
                 }
-                Ok(i16::from_be_bytes([bitstring[0], bitstring[1]]))
+
+                let mut buf = [0; 2];
+                buf[2 - (bitwidth / 8) as usize..].copy_from_slice(bitstring);
+                Ok(i16::from_be_bytes(buf))
             }
             _ => Err(DeserializeP4DataError::ExpectedI16),
         }
@@ -124,10 +130,13 @@ impl<'de> Deserializer<'de> {
     fn parse_i32(&self) -> Result<i32, DeserializeP4DataError> {
         match &self.data.data {
             Some(p4_data::Data::Bitstring(bytes)) => {
-                if bytes.len() != 4 {
+                if bytes.len() > 4 {
                     return Err(DeserializeP4DataError::ExpectedI32);
                 }
-                Ok(i32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]))
+
+                let mut buf = [0; 4];
+                buf[4 - bytes.len()..].copy_from_slice(bytes);
+                Ok(i32::from_be_bytes(buf))
             }
             Some(p4_data::Data::Varbit(P4Varbit {
                 bitstring,
@@ -136,12 +145,10 @@ impl<'de> Deserializer<'de> {
                 if *bitwidth > 32 {
                     return Err(DeserializeP4DataError::ExpectedI32);
                 }
-                Ok(i32::from_be_bytes([
-                    bitstring[0],
-                    bitstring[1],
-                    bitstring[2],
-                    bitstring[3],
-                ]))
+
+                let mut buf = [0; 4];
+                buf[4 - (bitwidth / 8) as usize..].copy_from_slice(bitstring);
+                Ok(i32::from_be_bytes(buf))
             }
             _ => Err(DeserializeP4DataError::ExpectedI32),
         }
@@ -150,12 +157,13 @@ impl<'de> Deserializer<'de> {
     fn parse_i64(&self) -> Result<i64, DeserializeP4DataError> {
         match &self.data.data {
             Some(p4_data::Data::Bitstring(bytes)) => {
-                if bytes.len() != 8 {
+                if bytes.len() > 8 {
                     return Err(DeserializeP4DataError::ExpectedI64);
                 }
-                Ok(i64::from_be_bytes([
-                    bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
-                ]))
+
+                let mut buf = [0; 8];
+                buf[8 - bytes.len()..].copy_from_slice(bytes);
+                Ok(i64::from_be_bytes(buf))
             }
             Some(p4_data::Data::Varbit(P4Varbit {
                 bitstring,
@@ -164,16 +172,10 @@ impl<'de> Deserializer<'de> {
                 if *bitwidth > 64 {
                     return Err(DeserializeP4DataError::ExpectedI64);
                 }
-                Ok(i64::from_be_bytes([
-                    bitstring[0],
-                    bitstring[1],
-                    bitstring[2],
-                    bitstring[3],
-                    bitstring[4],
-                    bitstring[5],
-                    bitstring[6],
-                    bitstring[7],
-                ]))
+
+                let mut buf = [0; 8];
+                buf[8 - (bitwidth / 8) as usize..].copy_from_slice(bitstring);
+                Ok(i64::from_be_bytes(buf))
             }
             _ => Err(DeserializeP4DataError::ExpectedI64),
         }
@@ -203,10 +205,13 @@ impl<'de> Deserializer<'de> {
     fn parse_u16(&self) -> Result<u16, DeserializeP4DataError> {
         match &self.data.data {
             Some(p4_data::Data::Bitstring(bytes)) => {
-                if bytes.len() != 2 {
+                if bytes.len() > 2 {
                     return Err(DeserializeP4DataError::ExpectedU16);
                 }
-                Ok(u16::from_be_bytes([bytes[0], bytes[1]]))
+
+                let mut buf = [0; 2];
+                buf[2 - bytes.len()..].copy_from_slice(bytes);
+                Ok(u16::from_be_bytes(buf))
             }
             Some(p4_data::Data::Varbit(P4Varbit {
                 bitstring,
@@ -215,7 +220,10 @@ impl<'de> Deserializer<'de> {
                 if *bitwidth > 16 {
                     return Err(DeserializeP4DataError::ExpectedU16);
                 }
-                Ok(u16::from_be_bytes([bitstring[0], bitstring[1]]))
+
+                let mut buf = [0; 2];
+                buf[2 - (bitwidth / 8) as usize..].copy_from_slice(bitstring);
+                Ok(u16::from_be_bytes(buf))
             }
             _ => Err(DeserializeP4DataError::ExpectedU16),
         }
@@ -224,10 +232,13 @@ impl<'de> Deserializer<'de> {
     fn parse_u32(&self) -> Result<u32, DeserializeP4DataError> {
         match &self.data.data {
             Some(p4_data::Data::Bitstring(bytes)) => {
-                if bytes.len() != 4 {
+                if bytes.len() > 4 {
                     return Err(DeserializeP4DataError::ExpectedU32);
                 }
-                Ok(u32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]))
+
+                let mut buf = [0; 4];
+                buf[4 - bytes.len()..].copy_from_slice(bytes);
+                Ok(u32::from_be_bytes(buf))
             }
             Some(p4_data::Data::Varbit(P4Varbit {
                 bitstring,
@@ -236,12 +247,10 @@ impl<'de> Deserializer<'de> {
                 if *bitwidth > 32 {
                     return Err(DeserializeP4DataError::ExpectedU32);
                 }
-                Ok(u32::from_be_bytes([
-                    bitstring[0],
-                    bitstring[1],
-                    bitstring[2],
-                    bitstring[3],
-                ]))
+
+                let mut buf = [0; 4];
+                buf[4 - (bitwidth / 8) as usize..].copy_from_slice(bitstring);
+                Ok(u32::from_be_bytes(buf))
             }
             _ => Err(DeserializeP4DataError::ExpectedU32),
         }
@@ -255,7 +264,7 @@ impl<'de> Deserializer<'de> {
                 }
 
                 let mut buf = [0; 8];
-                buf[8 - bytes.len()..].copy_from_slice(&bytes);
+                buf[8 - bytes.len()..].copy_from_slice(bytes);
                 Ok(u64::from_be_bytes(buf))
             }
             Some(p4_data::Data::Varbit(P4Varbit {
@@ -265,16 +274,10 @@ impl<'de> Deserializer<'de> {
                 if *bitwidth > 64 {
                     return Err(DeserializeP4DataError::ExpectedU64);
                 }
-                Ok(u64::from_be_bytes([
-                    bitstring[0],
-                    bitstring[1],
-                    bitstring[2],
-                    bitstring[3],
-                    bitstring[4],
-                    bitstring[5],
-                    bitstring[6],
-                    bitstring[7],
-                ]))
+
+                let mut buf = [0; 8];
+                buf[8 - (bitwidth / 8) as usize..].copy_from_slice(bitstring);
+                Ok(u64::from_be_bytes(buf))
             }
             _ => Err(DeserializeP4DataError::ExpectedU64),
         }
