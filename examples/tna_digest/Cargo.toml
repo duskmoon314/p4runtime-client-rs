@@ -1,0 +1,12 @@
+[package]
+name = "tna_digest"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = { workspace = true }
+env_logger = { workspace = true }
+p4runtime-client = { workspace = true }
+prost = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+tokio = { workspace = true, features = ["full"] }
