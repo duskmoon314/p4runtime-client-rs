@@ -66,7 +66,7 @@ control SwitchIngress(
 
     table ipv4_lpm {
         key = {
-            hdr.ipv4.dstAddr : lpm;
+            hdr.ipv4.dst_addr : lpm;
         }
         actions = {
             drop;
