@@ -1,10 +1,6 @@
-use p4runtime_client::client::{Client, ClientOptions};
+use p4runtime_client::client::Client;
 use p4runtime_client::p4runtime::p4::config::v1::P4Info;
-use p4runtime_client::p4runtime::p4::v1::p4_runtime_client::P4RuntimeClient;
-use p4runtime_client::p4runtime::p4::v1::stream_message_response::Update;
-use p4runtime_client::p4runtime::p4::v1::{
-    self as p4_v1, CapabilitiesRequest, DigestList, Uint128,
-};
+use p4runtime_client::p4runtime::p4::v1::{self as p4_v1, Uint128};
 use p4runtime_client::utils::de::from_p4data;
 use prost::Message;
 
@@ -18,27 +14,22 @@ struct Ipv4Digest {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    env_logger::init();
+
     let p4bin = include_bytes!("../build/main.json");
     let p4info = include_bytes!("../build/main.p4info.bin");
     let p4info = P4Info::decode(&p4info[..])?;
 
-    let mut p4rt_client = P4RuntimeClient::connect("http://127.0.0.1:9559").await?;
-    let res = p4rt_client.capabilities(CapabilitiesRequest {}).await?;
+    let mut client = Client::builder()
+        .device_id(0)
+        .election_id(Uint128 { high: 0, low: 1 })
+        .build()?;
+    client.connect("http://127.0.0.1:9559").await?;
+
+    let capabilities = client.capabilities().await?;
     println!(
         "Server P4Runtime capabilities: {:?}",
-        res.get_ref().p4runtime_api_version
-    );
-
-    let mut client = Client::new(
-        p4rt_client,
-        0,
-        Uint128 { high: 0, low: 1 },
-        None,
-        ClientOptions {
-            stream_channel_buffer_size: 1024,
-
-            ..Default::default()
-        },
+        capabilities.p4runtime_api_version
     );
 
     println!("Starting master arbitration...");
@@ -94,18 +85,11 @@ async fn main() -> anyhow::Result<()> {
     let digest_entry = client.digest().new_entry("ipv4_digest_t", 0, 1, 0);
     client.digest_mut().insert_entry(digest_entry).await?;
 
-    while let Some(msg) = client
-        .stream_message_receiver
-        .as_mut()
-        .unwrap()
-        .message()
-        .await?
-    {
-        if let Some(Update::Digest(DigestList { data, .. })) = msg.update {
-            for d in data {
-                let ipv4_digest: Ipv4Digest = from_p4data(&d)?;
-                println!("Received IPv4 digest: {:?}", ipv4_digest);
-            }
+    while let Ok(digest) = client.get_digest(1).await {
+        let data = digest.data;
+        for d in data {
+            let ipv4_digest: Ipv4Digest = from_p4data(&d)?;
+            println!("Received IPv4 digest: {:?}", ipv4_digest);
         }
     }
 

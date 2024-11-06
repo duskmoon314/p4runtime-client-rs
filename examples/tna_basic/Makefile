@@ -13,7 +13,7 @@ build: mkdir p4src/main.p4
 		-DCMAKE_MODULE_PATH=${SDE}/cmake \
 		-DP4_NAME=tna_p4rt_basic \
 		-DP4_PATH=$(CURDIR)/p4src/main.p4 \
-		-DP4FLAGS="--p4runtime-files=p4rt.bin,p4rt.txt --p4runtime-force-std-externs" \
+		-DP4FLAGS="--p4runtime-files=p4rt.bin,p4rt.txt,p4rt.json --p4runtime-force-std-externs" \
 	&& make tna_p4rt_basic \
 	&& make install
 

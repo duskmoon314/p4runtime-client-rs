@@ -4,7 +4,7 @@ use std::borrow::{Borrow, BorrowMut};
 
 use p4runtime::p4::v1 as p4_v1;
 
-use crate::client::Client;
+use crate::{client::Client, error::ClientError};
 
 /// Wrapper for digest operations
 pub struct Digest<T>
@@ -47,7 +47,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Digest<T> {
     pub async fn read_entry(
         &mut self,
         digest_entry: p4_v1::DigestEntry,
-    ) -> Result<p4_v1::DigestEntry, error::ReadDigestEntrySingleError> {
+    ) -> Result<p4_v1::DigestEntry, ClientError> {
         let entity = p4_v1::Entity {
             entity: Some(p4_v1::entity::Entity::DigestEntry(digest_entry)),
         };
@@ -57,9 +57,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Digest<T> {
 
         match entity.entity {
             Some(p4_v1::entity::Entity::DigestEntry(entry)) => Ok(entry),
-            _ => Err(error::ReadDigestEntrySingleError::NotDigestEntry(
-                entity.entity,
-            )),
+            _ => Err(ClientError::UnexpectedEntry),
         }
     }
 
@@ -67,7 +65,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Digest<T> {
     pub async fn insert_entry(
         &mut self,
         digest_entry: p4_v1::DigestEntry,
-    ) -> Result<tonic::Response<p4_v1::WriteResponse>, tonic::Status> {
+    ) -> Result<tonic::Response<p4_v1::WriteResponse>, ClientError> {
         let update = p4_v1::Update {
             r#type: p4_v1::update::Type::Insert as i32,
             entity: Some(p4_v1::Entity {
@@ -83,7 +81,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Digest<T> {
     pub async fn insert_entries(
         &mut self,
         digest_entries: Vec<p4_v1::DigestEntry>,
-    ) -> Result<tonic::Response<p4_v1::WriteResponse>, tonic::Status> {
+    ) -> Result<tonic::Response<p4_v1::WriteResponse>, ClientError> {
         let updates = digest_entries
             .into_iter()
             .map(|entry| p4_v1::Update {
@@ -102,7 +100,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Digest<T> {
     pub async fn modify_entry(
         &mut self,
         digest_entry: p4_v1::DigestEntry,
-    ) -> Result<tonic::Response<p4_v1::WriteResponse>, tonic::Status> {
+    ) -> Result<tonic::Response<p4_v1::WriteResponse>, ClientError> {
         let update = p4_v1::Update {
             r#type: p4_v1::update::Type::Modify as i32,
             entity: Some(p4_v1::Entity {
@@ -118,7 +116,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Digest<T> {
     pub async fn modify_entries(
         &mut self,
         digest_entries: Vec<p4_v1::DigestEntry>,
-    ) -> Result<tonic::Response<p4_v1::WriteResponse>, tonic::Status> {
+    ) -> Result<tonic::Response<p4_v1::WriteResponse>, ClientError> {
         let updates = digest_entries
             .into_iter()
             .map(|entry| p4_v1::Update {
@@ -137,7 +135,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Digest<T> {
     pub async fn delete_entry(
         &mut self,
         digest_entry: p4_v1::DigestEntry,
-    ) -> Result<tonic::Response<p4_v1::WriteResponse>, tonic::Status> {
+    ) -> Result<tonic::Response<p4_v1::WriteResponse>, ClientError> {
         let update = p4_v1::Update {
             r#type: p4_v1::update::Type::Delete as i32,
             entity: Some(p4_v1::Entity {
@@ -153,7 +151,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Digest<T> {
     pub async fn delete_entries(
         &mut self,
         digest_entries: Vec<p4_v1::DigestEntry>,
-    ) -> Result<tonic::Response<p4_v1::WriteResponse>, tonic::Status> {
+    ) -> Result<tonic::Response<p4_v1::WriteResponse>, ClientError> {
         let updates = digest_entries
             .into_iter()
             .map(|entry| p4_v1::Update {
@@ -172,7 +170,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Digest<T> {
     pub async fn ack_digest_list(
         &mut self,
         digest_list: &p4_v1::DigestList,
-    ) -> Result<(), tokio::sync::mpsc::error::SendError<p4_v1::StreamMessageRequest>> {
+    ) -> Result<(), ClientError> {
         let req = p4_v1::StreamMessageRequest {
             update: Some(p4_v1::stream_message_request::Update::DigestAck(
                 p4_v1::DigestListAck {
@@ -183,29 +181,6 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Digest<T> {
         };
 
         let client: &mut Client = self.client.borrow_mut();
-        client
-            .stream_message_sender
-            .as_mut()
-            .unwrap()
-            .send(req)
-            .await
-    }
-}
-
-/// Error types for Digest operations
-pub mod error {
-    use p4runtime::p4::v1 as p4_v1;
-    use thiserror::Error;
-
-    /// Error for [`read_entry`](crate::digest::Digest::read_entry)
-    #[derive(Error, Debug)]
-    pub enum ReadDigestEntrySingleError {
-        /// The inner read entity error
-        #[error(transparent)]
-        ReadEntitySingle(#[from] crate::client::error::ReadEntitySingleError),
-
-        /// The entity is not a DigestEntry
-        #[error("Entity is not a DigestEntry: {0:?}")]
-        NotDigestEntry(Option<p4_v1::entity::Entity>),
+        client.send_message_request(req).await
     }
 }

@@ -4,7 +4,7 @@ use std::borrow::{Borrow, BorrowMut};
 
 use p4runtime::p4::v1 as p4_v1;
 
-use crate::client::Client;
+use crate::{client::Client, error::ClientError};
 
 /// Wrapper for counter operations
 pub struct Counter<T>
@@ -49,7 +49,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Counter<T> {
     pub async fn read_entry(
         &mut self,
         counter_entry: p4_v1::CounterEntry,
-    ) -> Result<p4_v1::CounterEntry, error::ReadCounterEntrySingleError> {
+    ) -> Result<p4_v1::CounterEntry, ClientError> {
         let entity = p4_v1::Entity {
             entity: Some(p4_v1::entity::Entity::CounterEntry(counter_entry)),
         };
@@ -60,9 +60,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Counter<T> {
         if let Some(p4_v1::entity::Entity::CounterEntry(counter_entry)) = entity.entity {
             Ok(counter_entry)
         } else {
-            Err(error::ReadCounterEntrySingleError::NotCounterEntry(
-                entity.entity,
-            ))
+            Err(ClientError::UnexpectedEntry)
         }
     }
 
@@ -70,7 +68,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Counter<T> {
     pub async fn read_entries(
         &mut self,
         counter_entry: p4_v1::CounterEntry,
-    ) -> Result<Vec<p4_v1::CounterEntry>, error::ReadCounterEntriesError> {
+    ) -> Result<Vec<p4_v1::CounterEntry>, ClientError> {
         let entity = p4_v1::Entity {
             entity: Some(p4_v1::entity::Entity::CounterEntry(counter_entry)),
         };
@@ -84,10 +82,10 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Counter<T> {
                 if let Some(p4_v1::entity::Entity::CounterEntry(counter_entry)) = e.entity {
                     Ok(counter_entry)
                 } else {
-                    Err(error::ReadCounterEntriesError::NotCounterEntry(e.entity))
+                    Err(ClientError::UnexpectedEntry)
                 }
             })
-            .collect::<Result<Vec<p4_v1::CounterEntry>, error::ReadCounterEntriesError>>()?;
+            .collect::<Result<Vec<p4_v1::CounterEntry>, ClientError>>()?;
 
         Ok(entries)
     }
@@ -96,7 +94,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Counter<T> {
     pub async fn modify_entry(
         &mut self,
         counter_entry: p4_v1::CounterEntry,
-    ) -> Result<p4_v1::WriteResponse, tonic::Status> {
+    ) -> Result<p4_v1::WriteResponse, ClientError> {
         let update = p4_v1::Update {
             r#type: p4_v1::update::Type::Modify as i32,
             entity: Some(p4_v1::Entity {
@@ -113,7 +111,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Counter<T> {
     pub async fn modify_entries(
         &mut self,
         counter_entries: Vec<p4_v1::CounterEntry>,
-    ) -> Result<p4_v1::WriteResponse, tonic::Status> {
+    ) -> Result<p4_v1::WriteResponse, ClientError> {
         let updates = counter_entries
             .into_iter()
             .map(|counter_entry| p4_v1::Update {
@@ -127,35 +125,5 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Counter<T> {
         let client: &mut Client = self.client.borrow_mut();
         let res = client.write_update_batch(updates).await?;
         Ok(res.into_inner())
-    }
-}
-
-/// Error types for counter operations
-pub mod error {
-    use p4runtime::p4::v1 as p4_v1;
-    use thiserror::Error;
-
-    /// Error for reading a single counter entry
-    #[derive(Debug, Error)]
-    pub enum ReadCounterEntrySingleError {
-        /// Read entity single error
-        #[error(transparent)]
-        ReadEntitySingle(#[from] crate::client::error::ReadEntitySingleError),
-
-        /// Entity is not a CounterEntry
-        #[error("Entity is not a CounterEntry: {0:?}")]
-        NotCounterEntry(Option<p4_v1::entity::Entity>),
-    }
-
-    /// Error for reading multiple counter entries
-    #[derive(Debug, Error)]
-    pub enum ReadCounterEntriesError {
-        /// Read entities error
-        #[error("Tonic status: {0}")]
-        TonicStatus(#[from] tonic::Status),
-
-        /// Entity is not a CounterEntry
-        #[error("Entity is not a CounterEntry: {0:?}")]
-        NotCounterEntry(Option<p4_v1::entity::Entity>),
     }
 }

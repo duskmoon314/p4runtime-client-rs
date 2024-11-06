@@ -7,7 +7,8 @@ edition = "2021"
 
 [dependencies]
 anyhow = { workspace = true }
-tokio = { workspace = true, features = ["full"] }
+env_logger = { workspace = true }
 p4runtime-client = { workspace = true }
 prost = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
+tokio = { workspace = true, features = ["full"] }

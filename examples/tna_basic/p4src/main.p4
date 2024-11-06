@@ -52,10 +52,32 @@ control SwitchIngress(
         inout ingress_intrinsic_metadata_for_deparser_t ig_intr_dprsr_md,
         inout ingress_intrinsic_metadata_for_tm_t ig_intr_tm_md) {
 
-    Counter<bit<32>, bit<32>>(1, CounterType_t.PACKETS_AND_BYTES) counter;
+    Counter<bit<32>, bit<32>>(2, CounterType_t.PACKETS_AND_BYTES) counter;
+
+    action drop() {
+        counter.count(32w0);
+        ig_intr_dprsr_md.drop_ctl = 0x1;
+    }
+
+    action ipv4_forward(PortId_t port) {
+        counter.count(32w1);
+        ig_intr_tm_md.ucast_egress_port = port;
+    }
+
+    table ipv4_lpm {
+        key = {
+            hdr.ipv4.dstAddr : lpm;
+        }
+        actions = {
+            drop;
+            ipv4_forward;
+        }
+        size = 1024;
+        default_action = drop();
+    }
 
     apply {
-        counter.count(32w0);
+        ipv4_lpm.apply();
     }
 }
 

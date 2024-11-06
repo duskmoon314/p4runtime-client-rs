@@ -13,6 +13,7 @@ members = ["examples/basic", "examples/tna_basic"]
 # Error handling
 anyhow = "1.0.89"
 thiserror = "1.0.63"
+error_set = "0.7.0"
 
 # protobuf and gRPC
 prost = "0.13.2"
@@ -21,9 +22,15 @@ tonic = "0.12.3"
 # tokio async runtime and utilities
 tokio = "1.40.0"
 tokio-stream = "0.1.16"
+tokio-util = "0.7.12"
 
 # serde
 serde = "1.0.210"
+
+derive_builder = "0.20.2"
+
+log = "0.4.22"
+env_logger = "0.11.5"
 
 p4runtime-client = { path = "." }
 
@@ -31,6 +38,7 @@ p4runtime-client = { path = "." }
 
 # Error handling
 thiserror = { workspace = true }
+error_set = { workspace = true }
 
 # protobuf and gRPC
 prost = { workspace = true }
@@ -43,6 +51,11 @@ p4runtime = { git = "https://github.com/p4lang/p4runtime" }
 # tokio async runtime and utilities
 tokio = { workspace = true, features = ["sync"] }
 tokio-stream = { workspace = true }
+tokio-util = { workspace = true }
 
 # serde
 serde = { workspace = true, features = ["derive"] }
+
+derive_builder = { workspace = true }
+
+log = { workspace = true }

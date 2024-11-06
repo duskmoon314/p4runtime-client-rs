@@ -4,7 +4,7 @@ use std::borrow::{Borrow, BorrowMut};
 
 use p4runtime::p4::v1 as p4_v1;
 
-use crate::client::Client;
+use crate::{client::Client, error::ClientError};
 
 /// Wrapper for table operations
 pub struct Table<T>
@@ -85,7 +85,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Table<T> {
     pub async fn read_entry(
         &mut self,
         table_entry: p4_v1::TableEntry,
-    ) -> Result<p4_v1::TableEntry, error::ReadTableEntrySingleError> {
+    ) -> Result<p4_v1::TableEntry, ClientError> {
         let entity = p4_v1::Entity {
             entity: Some(p4_v1::entity::Entity::TableEntry(table_entry)),
         };
@@ -96,9 +96,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Table<T> {
         if let Some(p4_v1::entity::Entity::TableEntry(table_entry)) = entity.entity {
             Ok(table_entry)
         } else {
-            Err(error::ReadTableEntrySingleError::NotTableEntry(
-                entity.entity,
-            ))
+            Err(ClientError::UnexpectedEntry)
         }
     }
 
@@ -106,7 +104,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Table<T> {
     pub async fn read_entries(
         &mut self,
         table_entry: p4_v1::TableEntry,
-    ) -> Result<Vec<p4_v1::TableEntry>, error::ReadTableEntriesError> {
+    ) -> Result<Vec<p4_v1::TableEntry>, ClientError> {
         let entity = p4_v1::Entity {
             entity: Some(p4_v1::entity::Entity::TableEntry(table_entry)),
         };
@@ -120,10 +118,10 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Table<T> {
                 if let Some(p4_v1::entity::Entity::TableEntry(table_entry)) = e.entity {
                     Ok(table_entry)
                 } else {
-                    Err(error::ReadTableEntriesError::NotTableEntry(e.entity))
+                    Err(ClientError::UnexpectedEntry)
                 }
             })
-            .collect::<Result<Vec<p4_v1::TableEntry>, error::ReadTableEntriesError>>()?;
+            .collect::<Result<Vec<p4_v1::TableEntry>, ClientError>>()?;
 
         Ok(entries)
     }
@@ -132,7 +130,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Table<T> {
     pub async fn insert_entry(
         &mut self,
         table_entry: p4_v1::TableEntry,
-    ) -> Result<tonic::Response<p4_v1::WriteResponse>, tonic::Status> {
+    ) -> Result<tonic::Response<p4_v1::WriteResponse>, ClientError> {
         let update = p4_v1::Update {
             r#type: p4_v1::update::Type::Insert as i32,
             entity: Some(p4_v1::Entity {
@@ -148,7 +146,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Table<T> {
     pub async fn insert_entries(
         &mut self,
         table_entries: Vec<p4_v1::TableEntry>,
-    ) -> Result<tonic::Response<p4_v1::WriteResponse>, tonic::Status> {
+    ) -> Result<tonic::Response<p4_v1::WriteResponse>, ClientError> {
         let updates = table_entries
             .into_iter()
             .map(|table_entry| p4_v1::Update {
@@ -167,7 +165,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Table<T> {
     pub async fn modify_entry(
         &mut self,
         table_entry: p4_v1::TableEntry,
-    ) -> Result<tonic::Response<p4_v1::WriteResponse>, tonic::Status> {
+    ) -> Result<tonic::Response<p4_v1::WriteResponse>, ClientError> {
         let update = p4_v1::Update {
             r#type: p4_v1::update::Type::Modify as i32,
             entity: Some(p4_v1::Entity {
@@ -183,7 +181,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Table<T> {
     pub async fn modify_entries(
         &mut self,
         table_entries: Vec<p4_v1::TableEntry>,
-    ) -> Result<tonic::Response<p4_v1::WriteResponse>, tonic::Status> {
+    ) -> Result<tonic::Response<p4_v1::WriteResponse>, ClientError> {
         let updates = table_entries
             .into_iter()
             .map(|table_entry| p4_v1::Update {
@@ -202,7 +200,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Table<T> {
     pub async fn delete_entry(
         &mut self,
         table_entry: p4_v1::TableEntry,
-    ) -> Result<tonic::Response<p4_v1::WriteResponse>, tonic::Status> {
+    ) -> Result<tonic::Response<p4_v1::WriteResponse>, ClientError> {
         let update = p4_v1::Update {
             r#type: p4_v1::update::Type::Delete as i32,
             entity: Some(p4_v1::Entity {
@@ -218,7 +216,7 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Table<T> {
     pub async fn delete_entries(
         &mut self,
         table_entries: Vec<p4_v1::TableEntry>,
-    ) -> Result<tonic::Response<p4_v1::WriteResponse>, tonic::Status> {
+    ) -> Result<tonic::Response<p4_v1::WriteResponse>, ClientError> {
         let updates = table_entries
             .into_iter()
             .map(|table_entry| p4_v1::Update {
@@ -231,35 +229,5 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Table<T> {
 
         let client: &mut Client = self.client.borrow_mut();
         client.write_update_batch(updates).await
-    }
-}
-
-/// Error types for table operations
-pub mod error {
-    use p4runtime::p4::v1 as p4_v1;
-    use thiserror::Error;
-
-    /// Error for [`read_entry`](crate::table::Table::read_entry)
-    #[derive(Error, Debug)]
-    pub enum ReadTableEntrySingleError {
-        /// The inner read entity error
-        #[error(transparent)]
-        ReadEntitySingle(#[from] crate::client::error::ReadEntitySingleError),
-
-        /// The entity is not a table entry
-        #[error("Entity is not a TableEntry: {0:?}")]
-        NotTableEntry(Option<p4_v1::entity::Entity>),
-    }
-
-    /// Error for [`read_entries`](crate::table::Table::read_entries)
-    #[derive(Error, Debug)]
-    pub enum ReadTableEntriesError {
-        /// The inner read entities error
-        #[error("Tonic status: {0}")]
-        TonicStatus(#[from] tonic::Status),
-
-        /// The entity is not a table entry
-        #[error("Entity is not a TableEntry: {0:?}")]
-        NotTableEntry(Option<p4_v1::entity::Entity>),
     }
 }

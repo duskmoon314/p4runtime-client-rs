@@ -5,7 +5,7 @@ use std::{collections::HashMap, ops::Deref};
 use p4runtime::p4::config::v1 as p4_cfg_v1;
 
 /// P4Info Helper
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct P4Info {
     /// Internal P4Info object
     p4info: Option<p4_cfg_v1::P4Info>,
@@ -36,7 +36,7 @@ pub struct P4Info {
 
 impl AsRef<p4_cfg_v1::P4Info> for P4Info {
     fn as_ref(&self) -> &p4_cfg_v1::P4Info {
-        self.p4info.as_ref().unwrap()
+        self.p4info.as_ref().expect("P4Info not loaded")
     }
 }
 
@@ -44,7 +44,7 @@ impl Deref for P4Info {
     type Target = p4_cfg_v1::P4Info;
 
     fn deref(&self) -> &Self::Target {
-        self.p4info.as_ref().unwrap()
+        self.p4info.as_ref().expect("P4Info not loaded")
     }
 }
 
