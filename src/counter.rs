@@ -90,6 +90,35 @@ impl<T: Borrow<Client> + BorrowMut<Client>> Counter<T> {
         Ok(entries)
     }
 
+    /// Read multiple counters' entries
+    pub async fn read_entries_batch(
+        &mut self,
+        counter_entries: Vec<p4_v1::CounterEntry>,
+    ) -> Result<Vec<p4_v1::CounterEntry>, ClientError> {
+        let entities = counter_entries
+            .into_iter()
+            .map(|counter_entry| p4_v1::Entity {
+                entity: Some(p4_v1::entity::Entity::CounterEntry(counter_entry)),
+            })
+            .collect();
+
+        let client: &mut Client = self.client.borrow_mut();
+        let entities = client.read_entities_batch(entities).await?;
+
+        let entries = entities
+            .into_iter()
+            .map(|e| {
+                if let Some(p4_v1::entity::Entity::CounterEntry(counter_entry)) = e.entity {
+                    Ok(counter_entry)
+                } else {
+                    Err(ClientError::UnexpectedEntry)
+                }
+            })
+            .collect::<Result<Vec<p4_v1::CounterEntry>, ClientError>>()?;
+
+        Ok(entries)
+    }
+
     /// Modify a counter entry
     pub async fn modify_entry(
         &mut self,

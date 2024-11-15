@@ -3,6 +3,9 @@
 use std::{collections::HashMap, ops::Deref};
 
 use p4runtime::p4::config::v1 as p4_cfg_v1;
+use p4runtime::p4::v1 as p4_v1;
+
+pub mod table;
 
 /// P4Info Helper
 #[derive(Clone, Debug, Default)]
@@ -32,6 +35,9 @@ pub struct P4Info {
     register_id_map: HashMap<String, u32>,
     /// digest_name, id mapping
     digest_id_map: HashMap<String, u32>,
+
+    table_map: HashMap<u32, p4_cfg_v1::Table>,
+    action_map: HashMap<u32, p4_cfg_v1::Action>,
 }
 
 impl AsRef<p4_cfg_v1::P4Info> for P4Info {
@@ -71,6 +77,15 @@ impl P4Info {
                     ),
                 ]
             })
+            .collect();
+
+        self.table_map = self
+            .p4info
+            .as_ref()
+            .unwrap()
+            .tables
+            .iter()
+            .map(|table| (table.preamble.as_ref().unwrap().id, table.clone()))
             .collect();
 
         self.table_match_field_id_map = self
@@ -119,6 +134,15 @@ impl P4Info {
                     ),
                 ]
             })
+            .collect();
+
+        self.action_map = self
+            .p4info
+            .as_ref()
+            .unwrap()
+            .actions
+            .iter()
+            .map(|action| (action.preamble.as_ref().unwrap().id, action.clone()))
             .collect();
 
         self.action_profile_id_map = self
@@ -289,6 +313,20 @@ impl P4Info {
         *self.table_id_map.get(table_name).unwrap_or(&0)
     }
 
+    /// Find table by table id
+    pub fn get_table_by_id(&self, table_id: u32) -> Option<table::Table> {
+        let info_table = self.table_map.get(&table_id);
+
+        info_table.map(|info_table| table::Table::new(info_table, &self.action_map))
+    }
+
+    /// Find table by table name
+    pub fn get_table(&self, table_name: &str) -> Option<table::Table> {
+        let table_id = self.table_id(table_name);
+
+        self.get_table_by_id(table_id)
+    }
+
     /// Find table match field id by table name and match field name
     ///
     /// If not found, return 0 (wildcard)
@@ -319,8 +357,38 @@ impl P4Info {
     /// Find counter id by counter name
     ///
     /// If not found, return 0
+    #[inline]
     pub fn counter_id(&self, counter_name: &str) -> u32 {
         *self.counter_id_map.get(counter_name).unwrap_or(&0)
+    }
+
+    /// Make counter entry by counter name and data
+    pub fn make_counter_entry(
+        &self,
+        counter_name: &str,
+        index: Option<i64>,
+        data: Option<p4_v1::CounterData>,
+    ) -> p4_v1::CounterEntry {
+        let counter_id = self.counter_id(counter_name);
+        p4_v1::CounterEntry {
+            counter_id,
+            index: index.map(|i| p4_v1::Index { index: i }),
+            data,
+        }
+    }
+
+    /// Make counter entry by counter id and data
+    pub fn make_counter_entry_by_id(
+        &self,
+        counter_id: u32,
+        index: Option<i64>,
+        data: Option<p4_v1::CounterData>,
+    ) -> p4_v1::CounterEntry {
+        p4_v1::CounterEntry {
+            counter_id,
+            index: index.map(|i| p4_v1::Index { index: i }),
+            data,
+        }
     }
 
     /// Find direct counter id by direct counter name

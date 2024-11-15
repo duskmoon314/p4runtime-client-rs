@@ -32,5 +32,22 @@ pub mod error {
             },
             UnexpectedEntry
         } || TonicStatus || TokioError;
+        MakeFieldMatchError = {
+            UnexistedField {
+                field_name: String,
+            },
+            MissingMatchType,
+            UnsupportedMatchType {
+                match_type: String,
+            },
+            MissingSecondValue,
+            ExpectedVec,
+            ExpectedI32
+        };
+        MakeTableActionError = {
+            UnexistedAction {
+                action_name: String,
+            },
+        };
     }
 }
