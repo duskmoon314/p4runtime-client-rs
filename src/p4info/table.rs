@@ -6,10 +6,7 @@ use std::ops::Deref;
 use p4runtime::p4::config::v1 as p4_cfg_v1;
 use p4runtime::p4::v1 as p4_v1;
 
-use crate::{
-    error::{MakeFieldMatchError, MakeTableActionError},
-    utils::canonicalize_bitstring,
-};
+use crate::error::{MakeFieldMatchError, MakeTableActionError};
 
 /// Field match value.
 ///
@@ -112,9 +109,6 @@ impl<'a> Table<'a> {
                     field_name: field_name.to_string(),
                 })?;
 
-        // canocialize the value
-        let value = canonicalize_bitstring(value);
-
         let field_match = match field
             .r#match
             .as_ref()
@@ -151,17 +145,14 @@ impl<'a> Table<'a> {
                             .map(|v| v.into());
 
                         match second {
-                            Ok(FieldMatchValue::Vec(mask)) => {
-                                let mask = canonicalize_bitstring(mask);
-                                p4_v1::FieldMatch {
-                                    field_id: field.id,
-                                    field_match_type: Some(
-                                        p4_v1::field_match::FieldMatchType::Ternary(
-                                            p4_v1::field_match::Ternary { value, mask },
-                                        ),
+                            Ok(FieldMatchValue::Vec(mask)) => p4_v1::FieldMatch {
+                                field_id: field.id,
+                                field_match_type: Some(
+                                    p4_v1::field_match::FieldMatchType::Ternary(
+                                        p4_v1::field_match::Ternary { value, mask },
                                     ),
-                                }
-                            }
+                                ),
+                            },
                             Ok(_) => return Err(MakeFieldMatchError::ExpectedVec),
                             Err(e) => return Err(e),
                         }
@@ -172,17 +163,12 @@ impl<'a> Table<'a> {
                             .map(|v| v.into());
 
                         match second {
-                            Ok(FieldMatchValue::Vec(high)) => {
-                                let high = canonicalize_bitstring(high);
-                                p4_v1::FieldMatch {
-                                    field_id: field.id,
-                                    field_match_type: Some(
-                                        p4_v1::field_match::FieldMatchType::Range(
-                                            p4_v1::field_match::Range { low: value, high },
-                                        ),
-                                    ),
-                                }
-                            }
+                            Ok(FieldMatchValue::Vec(high)) => p4_v1::FieldMatch {
+                                field_id: field.id,
+                                field_match_type: Some(p4_v1::field_match::FieldMatchType::Range(
+                                    p4_v1::field_match::Range { low: value, high },
+                                )),
+                            },
                             Ok(_) => return Err(MakeFieldMatchError::ExpectedVec),
                             Err(e) => return Err(e),
                         }
@@ -229,7 +215,7 @@ impl<'a> Table<'a> {
             .enumerate()
             .map(|(i, param)| p4_v1::action::Param {
                 param_id: (i + 1) as u32,
-                value: canonicalize_bitstring(param),
+                value: param,
             })
             .collect();
 
