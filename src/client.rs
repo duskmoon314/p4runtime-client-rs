@@ -124,6 +124,11 @@ impl Client {
         self.cancel_token.cancel();
     }
 
+    /// Is the client cancelled
+    pub fn is_cancelled(&self) -> bool {
+        self.cancel_token.is_cancelled()
+    }
+
     /// Send a stream message request
     pub async fn send_message_request(
         &mut self,
@@ -374,6 +379,7 @@ impl Client {
 
                             Err(e) => {
                                 error!("Channel receive rpc error: {:?}", e);
+                                cancel_token.cancel();
                                 break;
                             }
                         }
