@@ -73,8 +73,23 @@ impl<'de> Deserializer<'de> {
     }
 
     fn parse_bool(&self) -> Result<bool, DeserializeP4DataError> {
-        match self.data.data {
-            Some(p4_data::Data::Bool(b)) => Ok(b),
+        match &self.data.data {
+            Some(p4_data::Data::Bool(b)) => Ok(*b),
+            Some(p4_data::Data::Bitstring(bytes)) => {
+                if bytes.len() != 1 {
+                    return Err(DeserializeP4DataError::ExpectedBool);
+                }
+                Ok(bytes[0] != 0)
+            }
+            Some(p4_data::Data::Varbit(P4Varbit {
+                bitstring,
+                bitwidth,
+            })) => {
+                if *bitwidth != 1 {
+                    return Err(DeserializeP4DataError::ExpectedBool);
+                }
+                Ok(bitstring[0] != 0)
+            }
             _ => Err(DeserializeP4DataError::ExpectedBool),
         }
     }
